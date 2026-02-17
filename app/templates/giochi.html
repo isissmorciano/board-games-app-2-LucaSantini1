@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="p-4 bg-white rounded shadow-sm">
+    <h2>Giochi</h2>
+
+    <form id="createGiocoForm" class="row g-2 mb-3">
+      <div class="col-md-4">
+        <input name="nome" class="form-control" placeholder="Nome" required>
+      </div>
+      <div class="col-md-2">
+        <input name="numero_giocatori_massimo" type="number" class="form-control" placeholder="Max giocatori" required>
+      </div>
+      <div class="col-md-2">
+        <input name="durata_media" type="number" class="form-control" placeholder="Durata (min)" required>
+      </div>
+      <div class="col-md-2">
+        <input name="categoria" class="form-control" placeholder="Categoria" required>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100" type="submit">Aggiungi</button>
+      </div>
+    </form>
+
+    <div id="msg"></div>
+
+    <table class="table table-striped" id="giochiTable">
+      <thead>
+        <tr><th>ID</th><th>Nome</th><th>Max</th><th>Durata</th><th>Categoria</th><th></th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function loadGiochi(){
+      const res = await fetch('/giochi');
+      const json = await res.json();
+      const tbody = document.querySelector('#giochiTable tbody');
+      tbody.innerHTML = '';
+      json.forEach(g => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${g.id}</td><td>${g.nome}</td><td>${g.numero_giocatori_massimo}</td><td>${g.durata_media}</td><td>${g.categoria}</td><td><a class='btn btn-sm btn-outline-secondary' href='/ui/giochi/${g.id}/partite'>Partite</a></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('createGiocoForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form).entries());
+      const res = await fetch('/giochi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+      const json = await res.json();
+      const msg = document.getElementById('msg');
+      if(res.ok){ msg.innerHTML = `<div class='alert alert-success'>Gioco creato, id ${json.id}</div>`; form.reset(); loadGiochi(); }
+      else { msg.innerHTML = `<div class='alert alert-danger'>${json.error || 'Errore'}</div>` }
+    });
+
+    loadGiochi();
+  </script>
+
+{% endblock %}

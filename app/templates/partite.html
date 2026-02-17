@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="p-4 bg-white rounded shadow-sm">
+    <h2>Partite - Gioco {{ gioco_id }}</h2>
+
+    <form id="createPartitaForm" class="row g-2 mb-3">
+      <div class="col-md-3">
+        <input name="data" class="form-control" placeholder="YYYY-MM-DD" required>
+      </div>
+      <div class="col-md-3">
+        <input name="vincitore" class="form-control" placeholder="Vincitore" required>
+      </div>
+      <div class="col-md-2">
+        <input name="punteggio_vincitore" type="number" class="form-control" placeholder="Punteggio" required>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100" type="submit">Aggiungi</button>
+      </div>
+      <div class="col-md-2">
+        <a class="btn btn-secondary w-100" href="/ui/giochi">Indietro</a>
+      </div>
+    </form>
+
+    <div id="msg"></div>
+
+    <table class="table table-striped" id="partiteTable">
+      <thead>
+        <tr><th>ID</th><th>Data</th><th>Vincitore</th><th>Punteggio</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const giocoId = {{ gioco_id }};
+
+    async function loadPartite(){
+      const res = await fetch(`/giochi/${giocoId}/partite`);
+      const json = await res.json();
+      const tbody = document.querySelector('#partiteTable tbody');
+      tbody.innerHTML = '';
+      json.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${p.id}</td><td>${p.data}</td><td>${p.vincitore}</td><td>${p.punteggio_vincitore}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('createPartitaForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target).entries());
+      const res = await fetch(`/giochi/${giocoId}/partite`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+      const json = await res.json();
+      const msg = document.getElementById('msg');
+      if(res.ok){ msg.innerHTML = `<div class='alert alert-success'>Partita creata, id ${json.id}</div>`; e.target.reset(); loadPartite(); }
+      else { msg.innerHTML = `<div class='alert alert-danger'>${json.error || 'Errore'}</div>` }
+    });
+
+    loadPartite();
+  </script>
+
+{% endblock %}
